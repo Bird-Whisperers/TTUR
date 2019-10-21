@@ -21,7 +21,7 @@ import numpy as np
 import os
 import gzip, pickle
 import tensorflow as tf
-from scipy.misc import imread
+from matplotlib.pyplot import imread
 from scipy import linalg
 import pathlib
 import urllib
@@ -34,7 +34,7 @@ class InvalidFIDException(Exception):
 def create_inception_graph(pth):
     """Creates a graph from saved GraphDef file."""
     # Creates graph from saved graph_def.pb.
-    with tf.io.gfile.FastGFile( pth, 'rb') as f:
+    with tf.io.gfile.GFile( pth, 'rb') as f:
         graph_def = tf.compat.v1.GraphDef()
         graph_def.ParseFromString( f.read())
         _ = tf.import_graph_def( graph_def, name='FID_Inception_Net')
@@ -52,7 +52,7 @@ def _get_inception_layer(sess):
         for o in op.outputs:
             shape = o.get_shape()
             if shape._dims != []:
-              shape = [s.value for s in shape]
+              shape = [s for s in shape]
               new_shape = []
               for j, s in enumerate(shape):
                 if s == 1 and j == 0:
@@ -301,8 +301,8 @@ def calculate_fid_given_paths(paths, inception_path, low_profile=False):
             raise RuntimeError("Invalid path: %s" % p)
 
     create_inception_graph(str(inception_path))
-    with tf.Session() as sess:
-        sess.run(tf.global_variables_initializer())
+    with tf.compat.v1.Session() as sess:
+        sess.run(tf.compat.v1.global_variables_initializer())
         m1, s1 = _handle_path(paths[0], sess, low_profile=low_profile)
         m2, s2 = _handle_path(paths[1], sess, low_profile=low_profile)
         fid_value = calculate_frechet_distance(m1, s1, m2, s2)
